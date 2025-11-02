@@ -86,18 +86,58 @@ public class ListaProdutosView extends JFrame {
 
         if (resultado == JOptionPane.OK_OPTION) {
             try {
-                produto.setNome(txtNome.getText());
-                produto.setDescricao(txtDescricao.getText());
-                produto.setQuantidade(Integer.parseInt(txtQuantidade.getText()));
-                produto.setPreco(Double.parseDouble(txtPreco.getText()));
+                String nome = txtNome.getText().trim();
+                if (nome.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "O campo Nome é obrigatório!", "Erro", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                produto.setNome(nome);
+                produto.setDescricao(txtDescricao.getText().trim());
+                produto.setQuantidade(parseInteger(txtQuantidade.getText()));
+                produto.setPreco(parseDouble(txtPreco.getText()));
                 
                 dao.atualizar(produto);
                 carregarTabela();
                 JOptionPane.showMessageDialog(this, "Produto atualizado com sucesso!");
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Erro: Quantidade e Preço devem ser números válidos!", "Erro", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Erro: Verifique se os campos Quantidade e Preço contêm números válidos!", "Erro", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Erro ao atualizar produto: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private int parseInteger(String texto) {
+        if (texto == null || texto.trim().isEmpty()) {
+            throw new NumberFormatException("Campo vazio");
+        }
+        // Remove espaços e caracteres não numéricos (exceto sinal negativo)
+        String limpo = texto.trim().replaceAll("[^0-9-]", "");
+        if (limpo.isEmpty() || limpo.equals("-")) {
+            throw new NumberFormatException("Número inválido: " + texto);
+        }
+        return Integer.parseInt(limpo);
+    }
+
+    private double parseDouble(String texto) {
+        if (texto == null || texto.trim().isEmpty()) {
+            throw new NumberFormatException("Campo vazio");
+        }
+        // Remove espaços e texto extra, mantendo números, vírgula/ponto e sinal negativo
+        String limpo = texto.trim().replaceAll("[^0-9,.-]", "");
+        // Converte vírgula para ponto (formato brasileiro)
+        limpo = limpo.replace(",", ".");
+        // Remove pontos extras (mantém apenas o separador decimal)
+        String[] partes = limpo.split("\\.");
+        if (partes.length > 2) {
+            // Se houver mais de um ponto, mantém apenas o primeiro como separador decimal
+            limpo = partes[0] + "." + String.join("", java.util.Arrays.copyOfRange(partes, 1, partes.length));
+        }
+        if (limpo.isEmpty() || limpo.equals("-") || limpo.equals(".")) {
+            throw new NumberFormatException("Número inválido: " + texto);
+        }
+        return Double.parseDouble(limpo);
     }
 
     private void apagarProduto() {
